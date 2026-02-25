@@ -11,6 +11,29 @@ interface Props {
 }
 
 export default function ChecklistItemRow({ item, isEditMode, onToggle, onDelete, onUpdate }: Props) {
+  const renderTextWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div
       className={cn(
@@ -49,10 +72,10 @@ export default function ChecklistItemRow({ item, isEditMode, onToggle, onDelete,
         ) : (
           <>
             <div className={cn("text-sm font-semibold", item.is_checked && "line-through text-muted-foreground/50")}>
-              {item.name}
+              {renderTextWithLinks(item.name)}
             </div>
             {item.quantity && (
-              <div className="text-xs text-muted-foreground">{item.quantity}</div>
+              <div className="text-xs text-muted-foreground">{renderTextWithLinks(item.quantity)}</div>
             )}
           </>
         )}

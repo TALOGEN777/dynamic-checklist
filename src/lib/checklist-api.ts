@@ -24,7 +24,8 @@ export async function fetchChecklists(): Promise<Checklist[]> {
       .from("items")
       .select("*")
       .in("tab_id", tabIds)
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
     if (itemErr) throw itemErr;
     items = data || [];
   }
@@ -106,45 +107,57 @@ export async function seedDefaultChecklist() {
   const cl = await createChecklist("CD19 CAR-T Manufacturing");
 
   const days = [
-    { name: "Day 0", items: [
-      { name: "AIM-V Medium", qty: "1x1L" },
-      { name: "Penicillin/Streptomycin", qty: "1x20ml" },
-      { name: "L-Glutamine Solution 200mM", qty: "1x20ml" },
-      { name: "Human male AB PD Serum (Heat Inactivated)", qty: "1x100ml" },
-      { name: "DPBS-Dulbecco's Phosphate Buffer Saline", qty: "2x500ml" },
-      { name: "Lymphoprep (Ficoll)", qty: "1x500ml" },
-      { name: "OKT-3 (MACS GMP CD3) 1mg/mL", qty: "1xAliquot" },
-      { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
-      { name: "CryoStor® CS10 (16mL)", qty: "1xUnit" },
-    ]},
-    { name: "Day 1", items: [
-      { name: "RetroNectin GMP grade (10µg/mL, 1:100)", qty: "1xAliquot" },
-      { name: "Human albumin 20%", qty: "1xUnit" },
-    ]},
-    { name: "Day 2", items: [
-      { name: "CD19 Viral Vector", qty: "1xAliquot" },
-      { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
-      { name: "STIM medium", qty: "1xUnit" },
-    ]},
-    { name: "Day 3", items: [
-      { name: "6-well plates", qty: "2xUnits" },
-      { name: "0.5M EDTA solution", qty: "1xAliquot" },
-      { name: "STIM medium", qty: "1xUnit" },
-    ]},
-    { name: "Day 6", items: [
-      { name: "AIM-V Medium", qty: "1x1L" },
-      { name: "Serum", qty: "1xUnit" },
-      { name: "Penicillin/Streptomycin", qty: "1x20ml" },
-      { name: "L-Glutamine Solution 200mM", qty: "1x20ml" },
-      { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
-    ]},
-    { name: "Day 10", items: [
-      { name: "AIM-V Medium", qty: "1x1L" },
-      { name: "Serum", qty: "1xUnit" },
-      { name: "Penicillin/Streptomycin", qty: "1x20ml" },
-      { name: "L-Glutamine Solution 200mM", qty: "1x20ml" },
-      { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
-    ]},
+    {
+      name: "Day 0", items: [
+        { name: "AIM-V Medium", qty: "1x1L" },
+        { name: "Penicillin/Streptomycin", qty: "1x20ml" },
+        { name: "L-Glutamine Solution 200mM", qty: "1x20ml" },
+        { name: "Human male AB PD Serum (Heat Inactivated)", qty: "1x100ml" },
+        { name: "DPBS-Dulbecco's Phosphate Buffer Saline", qty: "2x500ml" },
+        { name: "Lymphoprep (Ficoll)", qty: "1x500ml" },
+        { name: "OKT-3 (MACS GMP CD3) 1mg/mL", qty: "1xAliquot" },
+        { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
+        { name: "CryoStor® CS10 (16mL)", qty: "1xUnit" },
+      ]
+    },
+    {
+      name: "Day 1", items: [
+        { name: "RetroNectin GMP grade (10µg/mL, 1:100)", qty: "1xAliquot" },
+        { name: "Human albumin 20%", qty: "1xUnit" },
+      ]
+    },
+    {
+      name: "Day 2", items: [
+        { name: "CD19 Viral Vector", qty: "1xAliquot" },
+        { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
+        { name: "STIM medium", qty: "1xUnit" },
+      ]
+    },
+    {
+      name: "Day 3", items: [
+        { name: "6-well plates", qty: "2xUnits" },
+        { name: "0.5M EDTA solution", qty: "1xAliquot" },
+        { name: "STIM medium", qty: "1xUnit" },
+      ]
+    },
+    {
+      name: "Day 6", items: [
+        { name: "AIM-V Medium", qty: "1x1L" },
+        { name: "Serum", qty: "1xUnit" },
+        { name: "Penicillin/Streptomycin", qty: "1x20ml" },
+        { name: "L-Glutamine Solution 200mM", qty: "1x20ml" },
+        { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
+      ]
+    },
+    {
+      name: "Day 10", items: [
+        { name: "AIM-V Medium", qty: "1x1L" },
+        { name: "Serum", qty: "1xUnit" },
+        { name: "Penicillin/Streptomycin", qty: "1x20ml" },
+        { name: "L-Glutamine Solution 200mM", qty: "1x20ml" },
+        { name: "IL-2 (Proleukin) 3.6x10^6 IU/mL", qty: "1xAliquot" },
+      ]
+    },
   ];
 
   for (let i = 0; i < days.length; i++) {

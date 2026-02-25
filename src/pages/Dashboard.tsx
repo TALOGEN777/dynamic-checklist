@@ -5,7 +5,7 @@ import {
   fetchChecklists, createChecklist, updateChecklistName, deleteChecklist,
   createTab, updateTabName, deleteTab, createItem, updateItem, deleteItem, seedDefaultChecklist,
 } from "@/lib/checklist-api";
-import type { Checklist } from "@/types/checklist";
+import type { Checklist, ChecklistItem, Tab } from "@/types/checklist";
 import TabBar from "@/components/TabBar";
 import TabCard from "@/components/TabCard";
 import {
@@ -25,7 +25,7 @@ export default function Dashboard() {
   const { data: checklists = [], isLoading } = useQuery({
     queryKey: ["checklists"],
     queryFn: fetchChecklists,
-    
+
   });
 
   // Auto-seed default checklist for new users
@@ -48,7 +48,38 @@ export default function Dashboard() {
 
   const toggleItemMut = useMutation({
     mutationFn: ({ id, checked }: { id: string; checked: boolean }) => updateItem(id, { is_checked: checked }),
-    onSuccess: invalidate,
+    onMutate: async ({ id, checked }) => {
+      await queryClient.cancelQueries({ queryKey: ["checklists"] });
+      const previousChecklists = queryClient.getQueryData<Checklist[]>(["checklists"]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<Checklist[]>(["checklists"], (old) => {
+        if (!old) return old;
+        return old.map((checklist) => ({
+          ...checklist,
+          tabs: checklist.tabs.map((tab) => ({
+            ...tab,
+            items: tab.items.map((item) =>
+              item.id === id ? { ...item, is_checked: checked } : item
+            ),
+          })),
+        }));
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousChecklists };
+    },
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err, newTodo, context) => {
+      if (context?.previousChecklists) {
+        queryClient.setQueryData(["checklists"], context.previousChecklists);
+      }
+      toast({ title: "Failed to update item", variant: "destructive" });
+    },
+    // Always refetch after error or success:
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
+    },
   });
 
   const deleteItemMut = useMutation({ mutationFn: deleteItem, onSuccess: invalidate });
@@ -146,28 +177,31 @@ export default function Dashboard() {
                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
                   {showChecklistMenu && (
-                    <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-lg shadow-lg z-20 py-1">
-                      {checklists.map((cl) => (
-                        <button
-                          key={cl.id}
-                          onClick={() => { setSelectedChecklistId(cl.id); setShowChecklistMenu(false); setActiveTabId("all"); }}
-                          className={cn(
-                            "w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors",
-                            cl.id === selectedChecklistId && "bg-primary/10 text-primary font-semibold"
-                          )}
-                        >
-                          {cl.name}
-                        </button>
-                      ))}
-                      <div className="border-t border-border mt-1 pt-1">
-                        <button
-                          onClick={() => { handleAddChecklist(); setShowChecklistMenu(false); }}
-                          className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-secondary flex items-center gap-2"
-                        >
-                          <Plus className="h-3.5 w-3.5" /> New Checklist
-                        </button>
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setShowChecklistMenu(false)} />
+                      <div className="absolute top-full left-0 mt-1 w-64 bg-card border border-border rounded-lg shadow-lg z-20 py-1">
+                        {checklists.map((cl) => (
+                          <button
+                            key={cl.id}
+                            onClick={() => { setSelectedChecklistId(cl.id); setShowChecklistMenu(false); setActiveTabId("all"); }}
+                            className={cn(
+                              "w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors",
+                              cl.id === selectedChecklistId && "bg-primary/10 text-primary font-semibold"
+                            )}
+                          >
+                            {cl.name}
+                          </button>
+                        ))}
+                        <div className="border-t border-border mt-1 pt-1">
+                          <button
+                            onClick={() => { handleAddChecklist(); setShowChecklistMenu(false); }}
+                            className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-secondary flex items-center gap-2"
+                          >
+                            <Plus className="h-3.5 w-3.5" /> New Checklist
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -262,10 +296,7 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Click outside to close menu */}
-      {showChecklistMenu && (
-        <div className="fixed inset-0 z-10" onClick={() => setShowChecklistMenu(false)} />
-      )}
+      {/* Footer / End of Content */}
     </div>
   );
 }
