@@ -41,10 +41,10 @@ export async function fetchChecklists(): Promise<Checklist[]> {
   }));
 }
 
-export async function createChecklist(userId: string, name: string) {
+export async function createChecklist(name: string) {
   const { data, error } = await supabase
     .from("checklists")
-    .insert({ user_id: userId, name })
+    .insert({ name })
     .select()
     .single();
   if (error) throw error;
@@ -101,9 +101,9 @@ export async function deleteItem(id: string) {
   if (error) throw error;
 }
 
-// Seed the CD19 default checklist for a new user
-export async function seedDefaultChecklist(userId: string) {
-  const cl = await createChecklist(userId, "CD19 CAR-T Manufacturing");
+// Seed the CD19 default checklist for a new workspace
+export async function seedDefaultChecklist() {
+  const cl = await createChecklist("CD19 CAR-T Manufacturing");
 
   const days = [
     { name: "Day 0", items: [

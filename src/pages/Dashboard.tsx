@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
   fetchChecklists, createChecklist, updateChecklistName, deleteChecklist,
@@ -10,35 +9,31 @@ import type { Checklist } from "@/types/checklist";
 import TabBar from "@/components/TabBar";
 import TabCard from "@/components/TabCard";
 import {
-  ClipboardCheck, Pencil, Check, RotateCcw, Plus, Trash2, LogOut, ChevronDown,
+  ClipboardCheck, Pencil, Check, RotateCcw, Plus, Trash2, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
   const [selectedChecklistId, setSelectedChecklistId] = useState<string | null>(null);
   const [activeTabId, setActiveTabId] = useState<string | "all">("all");
   const [isEditMode, setIsEditMode] = useState(false);
   const [showChecklistMenu, setShowChecklistMenu] = useState(false);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
 
   const { data: checklists = [], isLoading } = useQuery({
     queryKey: ["checklists"],
     queryFn: fetchChecklists,
-    enabled: !!userId,
+    
   });
 
   // Auto-seed default checklist for new users
   useEffect(() => {
-    if (userId && !isLoading && checklists.length === 0) {
-      seedDefaultChecklist(userId).then(() => queryClient.invalidateQueries({ queryKey: ["checklists"] }));
+    if (!isLoading && checklists.length === 0) {
+      seedDefaultChecklist().then(() => queryClient.invalidateQueries({ queryKey: ["checklists"] }));
     }
-  }, [userId, isLoading, checklists.length]);
+  }, [isLoading, checklists.length]);
 
   // Auto-select first checklist
   useEffect(() => {
@@ -86,10 +81,9 @@ export default function Dashboard() {
   };
 
   const handleAddChecklist = async () => {
-    if (!userId) return;
     const name = prompt("Checklist name:");
     if (!name?.trim()) return;
-    const cl = await createChecklist(userId, name.trim());
+    const cl = await createChecklist(name.trim());
     await invalidate();
     setSelectedChecklistId(cl.id);
   };
@@ -116,9 +110,6 @@ export default function Dashboard() {
     addTabMut.mutate(name.trim());
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
 
   // Compute overall progress
   const allItems = currentChecklist?.tabs.flatMap((t) => t.items) ?? [];
@@ -216,9 +207,6 @@ export default function Dashboard() {
                   <RotateCcw className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="h-8 text-xs text-muted-foreground">
-                <LogOut className="h-3.5 w-3.5" />
-              </Button>
             </div>
           </div>
         </div>
