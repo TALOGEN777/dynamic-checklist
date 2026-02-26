@@ -102,6 +102,24 @@ export async function deleteItem(id: string) {
   if (error) throw error;
 }
 
+export async function duplicateChecklist(sourceId: string): Promise<{ id: string }> {
+  // Fetch the source checklist with all tabs and items
+  const checklists = await fetchChecklists();
+  const source = checklists.find((c) => c.id === sourceId);
+  if (!source) throw new Error("Checklist not found");
+
+  const newCl = await createChecklist(`${source.name} (Copy)`);
+
+  for (const tab of source.tabs) {
+    const newTab = await createTab(newCl.id, tab.name, tab.sort_order);
+    for (const item of tab.items) {
+      await createItem(newTab.id, item.name, item.quantity, item.sort_order);
+    }
+  }
+
+  return newCl;
+}
+
 // Seed the CD19 default checklist for a new workspace
 export async function seedDefaultChecklist() {
   const cl = await createChecklist("CD19 CAR-T Manufacturing");

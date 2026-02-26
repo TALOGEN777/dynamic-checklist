@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import {
-  fetchChecklists, createChecklist, updateChecklistName, deleteChecklist,
+  fetchChecklists, createChecklist, updateChecklistName, deleteChecklist, duplicateChecklist,
   createTab, updateTabName, deleteTab, createItem, updateItem, deleteItem, seedDefaultChecklist,
 } from "@/lib/checklist-api";
 import type { Checklist, ChecklistItem, Tab } from "@/types/checklist";
 import TabBar from "@/components/TabBar";
 import TabCard from "@/components/TabCard";
 import {
-  ClipboardCheck, Pencil, Check, RotateCcw, Plus, Trash2, ChevronDown,
+  ClipboardCheck, Pencil, Check, RotateCcw, Plus, Trash2, ChevronDown, Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -135,6 +135,18 @@ export default function Dashboard() {
     invalidate();
   };
 
+  const handleDuplicateChecklist = async () => {
+    if (!selectedChecklistId) return;
+    try {
+      const newCl = await duplicateChecklist(selectedChecklistId);
+      await invalidate();
+      setSelectedChecklistId(newCl.id);
+      toast({ title: "Checklist duplicated" });
+    } catch {
+      toast({ title: "Failed to duplicate", variant: "destructive" });
+    }
+  };
+
   const handleAddTab = () => {
     const name = prompt("Tab name (e.g. Day 14):");
     if (!name?.trim()) return;
@@ -222,6 +234,9 @@ export default function Dashboard() {
                 <>
                   <Button variant="ghost" size="sm" onClick={handleRenameChecklist} className="text-xs h-8">
                     Rename
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleDuplicateChecklist} className="text-xs h-8">
+                    <Copy className="h-3.5 w-3.5 mr-1" /> Duplicate
                   </Button>
                   <Button variant="ghost" size="sm" onClick={handleDeleteChecklist} className="text-xs h-8 text-destructive hover:text-destructive">
                     <Trash2 className="h-3.5 w-3.5" />
